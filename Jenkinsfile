@@ -1,51 +1,55 @@
 pipeline {
     agent any
-
     environment {
-        IMAGE_NAME = 'ziade18/jpetstore'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKER_IMAGE = "ziad10/jpetstore"
     }
-
     stages {
         stage('Clone Repository') {
             steps {
                 git 'https://github.com/Ziade18/Final_Project_DEPI.git'
             }
         }
-
-        stage('Build with Maven') {
+        stage('Build') {
             steps {
-                sh './mvnw clean package -DskipTests'
+                sh './mvnw clean package'
             }
         }
-
-        stage('Run Tests') {
+        stage('Test') {
             steps {
                 sh './mvnw test'
             }
         }
-
-        stage('Docker Build') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("${IMAGE_NAME}")
+                    docker.build("${DOCKER_IMAGE}:${env.BUILD_NUMBER}")
                 }
             }
         }
-
         stage('Push to DockerHub') {
             steps {
-                withDockerRegistry(credentialsId: 'dockerhub-creds', url: '') {
-                    script {
-                        dockerImage.push()
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                        docker.image("${DOCKER_IMAGE}:${env.BUILD_NUMBER}").push()
+                        docker.image("${DOCKER_IMAGE}:${env.BUILD_NUMBER}").push('latest')
                     }
                 }
             }
         }
-
-        stage('Deploy using Ansible') {
+        stage('Deploy with Ansible') {
             steps {
-                sh 'ansible-playbook -i inventory.ini playbook.yml'
+                ansiblePlaybook(
+                    playbook: 'ansible/playbook.yml',
+                    inventory: 'ansible/inventory.yml',
+                    extras: "-e docker_image=${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
+                )
             }
+        }
+    }
+    post {
+        always {
+            cleanWs()
         }
     }
 }
