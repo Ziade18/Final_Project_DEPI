@@ -5,7 +5,7 @@
 /.idea
 *.iml
 /build
-.mvn/wrapper/maven-wrapper.jar
+#.mvn/wrapper/maven-wrapper.jar
 *.releaseBackup
-*.properties
+#*.properties
 .env
