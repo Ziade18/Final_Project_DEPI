@@ -1,0 +1,35 @@
+---
+- hosts: localhost
+  connection: local
+  become: yes
+  vars:
+    container_name: jpetstore
+    host_port: 8080
+    container_port: 8080
+
+  tasks:
+    - name: Stop and remove existing container
+      docker_container:
+        name: "{{ container_name }}"
+        state: absent
+        force_kill: yes
+
+    - name: Remove existing image
+      docker_image:
+        name: "{{ image_name }}"
+        state: absent
+
+    - name: Pull the Docker image
+      docker_image:
+        name: "{{ image_name }}"
+        source: pull
+
+    - name: Run the container
+      docker_container:
+        name: "{{ container_name }}"
+        image: "{{ image_name }}"
+        state: started
+        restart: yes
+        ports:
+          - "{{ host_port }}:{{ container_port }}"
+        pull: yes
