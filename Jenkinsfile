@@ -7,7 +7,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/Ziade18/Final_Project_DEPI.git'
+                git branch: 'main', url: 'https://github.com/Ziade18/Final_Project_DEPI.git'
             }
         }
         stage('Build') {
